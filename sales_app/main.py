@@ -4,8 +4,7 @@ from modules.ui import SalesUI
 
 
 def main():
-    root = 
-    tk.Tk()
+    root = tk.Tk()
     root.title("매출 관리 프로그램")
     root.geometry("1100x700")
     root.resizable(True, True)
