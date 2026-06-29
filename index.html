@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus ERP 💎</title>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0; padding: 0;
+    }
+    body { background: #0d1117; color: #94a3b8; min-height: 100vh; }
+    .container { padding: 0 28px 60px; max-width: 100%; }
+
+    /* ── Top Bar ── */
+    .topbar {
+      display: flex; align-items: flex-end; gap: 16px; padding: 20px 0 0;
+    }
+    .search-wrap { flex: 5; }
+    .search-input {
+      width: 100%; background: #1a2035; border: 1px solid #2d3748;
+      border-radius: 24px; color: #94a3b8; font-size: 13px;
+      padding: 10px 20px; outline: none; transition: border-color 0.2s;
+    }
+    .search-input::placeholder { color: #374151; }
+    .search-input:focus { border-color: #4facfe; }
+
+    .date-group { flex: 2; position: relative; }
+    .date-group label {
+      display: block; font-size: 11px; color: #4a5568; font-weight: 500;
+      letter-spacing: 0.4px; margin-bottom: 4px; padding-left: 2px;
+    }
+    .date-group::before {
+      content: "📅"; position: absolute; left: 10px; bottom: 9px;
+      font-size: 14px; z-index: 2; pointer-events: none;
+    }
+    .date-input {
+      width: 100%; background: #1a2035; border: 1px solid #2a3a50;
+      border-radius: 8px; color: #cbd5e1; font-size: 13px;
+      padding: 7px 12px 7px 34px; height: 38px; outline: none;
+      transition: border-color 0.2s; font-family: 'Inter', sans-serif;
+      cursor: pointer;
+    }
+    .date-input:focus { border-color: #4facfe; box-shadow: 0 0 0 2px rgba(79,172,254,0.15); }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.4); cursor: pointer; }
+
+    .divider { border: none; border-top: 1px solid #1e2d3d; margin: 4px 0 20px; }
+
+    /* ── KPI ── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+    .kpi-card {
+      background: linear-gradient(145deg, #1a2035 0%, #1c2340 100%);
+      border: 1px solid #243044; border-radius: 14px; padding: 20px; min-height: 110px;
+    }
+    .kpi-label { color: #64748b; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+    .kpi-value { color: #f0f4f8; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2; margin-bottom: 6px; }
+    .kpi-delta { font-size: 12px; font-weight: 500; }
+    .kpi-delta.pos { color: #4ade80; }
+    .kpi-delta.neg { color: #f87171; }
+    .kpi-delta.neu { color: #64748b; }
+
+    /* ── Filters ── */
+    .filters { display: flex; gap: 12px; margin-bottom: 16px; align-items: flex-end; }
+    .filter-group { flex: 2; }
+    .filter-group label {
+      display: block; color: #64748b; font-size: 12px; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+    }
+    .filter-select {
+      width: 100%; background: #1a2035; border: 1px solid #2d3748; color: #94a3b8;
+      border-radius: 8px; padding: 8px 12px; font-size: 13px; outline: none;
+      cursor: pointer; font-family: 'Inter', sans-serif; height: 38px;
+      transition: border-color 0.2s;
+    }
+    .filter-select:hover, .filter-select:focus { border-color: #4facfe; }
+    .reset-btn {
+      flex: 1; background: #1a2035; border: 1px solid #2d3748; color: #64748b;
+      border-radius: 8px; font-size: 13px; padding: 0 14px; cursor: pointer;
+      white-space: nowrap; font-family: 'Inter', sans-serif; height: 38px;
+      transition: all 0.15s; align-self: flex-end;
+    }
+    .reset-btn:hover { border-color: #4facfe; color: #4facfe; }
+
+    /* ── Chart Section ── */
+    .chart-section { margin-bottom: 20px; }
+    .chart-header {
+      background: #131722; border: 1px solid #1e2d3d;
+      border-radius: 14px 14px 0 0; padding: 12px 16px 0;
+      display: flex; align-items: center;
+    }
+    .period-tabs {
+      display: flex; background: #0d1117; border: 1px solid #1e2d3d;
+      border-radius: 8px; padding: 3px; width: fit-content;
+    }
+    .period-btn {
+      padding: 5px 14px; border-radius: 6px; font-size: 12px; color: #4a5568;
+      background: none; border: none; cursor: pointer; font-weight: 500;
+      font-family: 'Inter', sans-serif; transition: all 0.15s;
+    }
+    .period-btn.active { background: #1e3a5f; color: #4facfe; }
+    .period-btn:hover:not(.active) { color: #94a3b8; }
+    .chart-body {
+      background: #131722; border-left: 1px solid #1e2d3d; border-right: 1px solid #1e2d3d;
+    }
+    .chart-footer {
+      background: #131722; border: 1px solid #1e2d3d; border-top: none;
+      border-radius: 0 0 14px 14px; height: 8px;
+    }
+
+    /* ── Table ── */
+    .table-section { margin-bottom: 28px; }
+    .section-head {
+      background: #131722; border: 1px solid #1e2d3d;
+      border-radius: 14px 14px 0 0; padding: 14px 22px 10px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-title { font-size: 15px; font-weight: 600; color: #e2e8f0; }
+    .section-hint { font-size: 12px; color: #374151; }
+    .table-wrap { overflow: auto; max-height: 420px; border: 1px solid #1e2d3d; border-top: none; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .data-table th {
+      background: #161e2e; color: #64748b; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 16px;
+      text-align: left; border-bottom: 1px solid #1e2d3d;
+      position: sticky; top: 0;
+    }
+    .data-table td { padding: 9px 16px; color: #94a3b8; border-bottom: 1px solid #161e2e; }
+    .data-table tbody tr:hover { background: #1a2035; }
+    .section-foot {
+      background: #131722; border: 1px solid #1e2d3d; border-top: none;
+      border-radius: 0 0 14px 14px; padding: 8px 22px;
+      text-align: right; font-size: 12px; color: #374151;
+    }
+
+    /* ── Teacher ── */
+    .teacher-body-wrap { border: 1px solid #1e2d3d; border-top: none; border-radius: 0 0 14px 14px; }
+    .teacher-empty {
+      background: #131722; padding: 36px; text-align: center;
+      color: #374151; font-size: 13px; border-radius: 0 0 14px 14px;
+    }
+    .teacher-content { background: #131722; display: flex; border-radius: 0 0 14px 14px; overflow: hidden; }
+    .teacher-card {
+      width: 220px; border-right: 1px solid #1e2d3d; padding: 28px 20px;
+      display: flex; flex-direction: column; align-items: center; gap: 16px; flex-shrink: 0;
+    }
+    .teacher-avatar {
+      width: 110px; height: 110px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 38px; font-weight: 800; color: #fff;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    }
+    .teacher-name { font-size: 15px; font-weight: 700; color: #f0f4f8; text-align: center; }
+    .teacher-badge {
+      display: inline-block; margin-top: 6px;
+      background: rgba(79,172,254,0.15); border: 1px solid rgba(79,172,254,0.3);
+      border-radius: 20px; padding: 2px 12px; font-size: 11px; font-weight: 600; color: #4facfe;
+    }
+    .info-list { width: 100%; border-top: 1px solid #1e2d3d; padding-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .info-row { display: flex; justify-content: space-between; }
+    .info-lbl { font-size: 11px; color: #64748b; }
+    .info-val { font-size: 11px; color: #94a3b8; }
+    .info-val.hi { color: #4facfe; font-weight: 600; }
+    .teacher-history { flex: 1; padding: 20px 24px 16px; overflow: auto; }
+    .history-title { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #0d1117; }
+    ::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="search-wrap">
+      <input type="text" class="search-input" placeholder="🔍   Search reports, branches...">
+    </div>
+    <div class="date-group">
+      <label>시작일</label>
+      <input type="date" id="dateStart" class="date-input" value="2025-01-01" min="2025-01-01" max="2026-05-17">
+    </div>
+    <div class="date-group">
+      <label>종료일</label>
+      <input type="date" id="dateEnd" class="date-input" value="2026-05-17" min="2025-01-01" max="2026-05-17">
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- KPI -->
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <label>Business Unit</label>
+      <select class="filter-select" id="buSel"><option value="All">All</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Branch</label>
+      <select class="filter-select" id="branchSel"><option value="All">All</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Teacher</label>
+      <select class="filter-select" id="teacherSel"><option value="All">All</option></select>
+    </div>
+    <button class="reset-btn" id="resetBtn">↺&nbsp; Reset Filters</button>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-section">
+    <div class="chart-header">
+      <div class="period-tabs">
+        <button class="period-btn" data-p="연">연</button>
+        <button class="period-btn active" data-p="월">월</button>
+        <button class="period-btn" data-p="주">주</button>
+        <button class="period-btn" data-p="일">일</button>
+      </div>
+    </div>
+    <div class="chart-body"><div id="mainChart"></div></div>
+    <div class="chart-footer"></div>
+  </div>
+
+  <!-- Stats Table -->
+  <div class="table-section">
+    <div class="section-head"><span class="section-title">매출 통계</span></div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead id="tHead"></thead>
+        <tbody id="tBody"></tbody>
+      </table>
+    </div>
+    <div class="section-foot" id="tFoot"></div>
+  </div>
+
+  <!-- Teacher Profile -->
+  <div class="teacher-section">
+    <div class="section-head">
+      <span class="section-title">👨‍🏫 교사 프로필</span>
+      <span class="section-hint">— 상단 필터에서 교사를 선택하면 프로필과 인사 이력이 표시됩니다</span>
+    </div>
+    <div class="teacher-body-wrap" id="teacherPanel"></div>
+  </div>
+
+</div>
+
+<script>
+// ── Constants ─────────────────────────────────────────────────────────────
+const BUSINESS_UNITS = ["동부","서부","중부","경기","충청","호남","전남","포항","경북","울산","경남","제주"];
+const BRANCHES = {
+  "동부": ["남양주","성남","둔촌","경기광주","구리","강북","의정부","마포"],
+  "서부": ["시흥","부천","김포","고양","일산","광명","양천","안양","서인천","검단"],
+  "중부": ["용인","처인","이천","동이천","여주","강릉","춘천","속초","원주"],
+  "경기": ["평택","북수원","오산","서수원","동탄","서평택","동수원","수지","안성"],
+  "충청": ["남청주","동청주","서청주","충주","대전","당진","동대전","천안","홍성"],
+  "호남": ["무등","나주","영광","해남","서광주","전주","익산"],
+  "전남": ["동순천","순천","여수","광양"],
+  "포항": ["동포항","죽도","신포항","경주"],
+  "경북": ["서대구","남대구","달서","동대구","새대구","김천","안동","남안동","상인"],
+  "울산": ["방어진","새울산","동울산","학성","남울산","화봉","북울산"],
+  "경남": ["동마산","진해","북창원","남창원","서진주","양산","동부산","진부산","김해","정관"],
+  "제주": ["제주","서귀포"],
+};
+const ALL_BRANCHES = Object.values(BRANCHES).flat();
+const TEACHERS = ["Lee Min-ho","Kim Ji-hyun","Park Seo-jun","Choi Yu-jin","Han Ji-min","Jung Hae-in","Oh Se-hun","Yoon A-reum"];
+const POOL = [300000,500000,800000,1000000,1250000,1500000,2000000,2500000];
+const BU_COLORS = {
+  "동부":"#4facfe","서부":"#00d4aa","중부":"#a78bfa","경기":"#f093fb",
+  "충청":"#43e97b","호남":"#fa709a","전남":"#fccb90","포항":"#667eea",
+  "경북":"#00f2fe","울산":"#f5576c","경남":"#fee140","제주":"#96fbc4",
+};
+const AVATAR_COLORS = [
+  ["#4facfe","#00f2fe"],["#667eea","#764ba2"],["#f093fb","#f5576c"],["#43e97b","#38f9d7"],
+  ["#fa709a","#fee140"],["#a18cd1","#fbc2eb"],["#fccb90","#d57eeb"],["#96fbc4","#f9f586"],
+];
+const LEVEL_LABELS    = ["강사","선임강사","팀장","수석강사"];
+const POSITION_LABELS = ["교사","선임교사","수석교사","부장"];
+const TEAM_LABELS     = ["학습관리팀","입시전략팀","교육운영팀","성과관리팀"];
+const DUTY_LABELS     = ["수업진행","커리큘럼 개발","학습상담","성과분석"];
+
+// ── Seeded RNG (Mulberry32) ────────────────────────────────────────────────
+function mkRng(seed) {
+  let s = seed >>> 0;
+  const api = {
+    next() {
+      s = (s + 0x6D2B79F5) >>> 0;
+      let t = Math.imul(s ^ (s >>> 15), 1 | s);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    },
+    randint(a, b) { return Math.floor(api.next() * (b - a + 1)) + a; },
+    choice(arr)   { return arr[Math.floor(api.next() * arr.length)]; },
+    uniform(a, b) { return a + api.next() * (b - a); },
+  };
+  return api;
+}
+
+// ── Generate seed data ─────────────────────────────────────────────────────
+function generateData() {
+  const rng = mkRng(42);
+  const records = [];
+  let rid = 1;
+  const end = new Date('2026-05-17T00:00:00');
+  let d = new Date('2025-01-01T00:00:00');
+  while (d <= end) {
+    const growth = d.getFullYear() === 2026 ? 1.15 : 1.0;
+    const n = rng.randint(7, 9);
+    const ds = d.toISOString().slice(0, 10);
+    for (let i = 0; i < n; i++) {
+      const bu = rng.choice(BUSINESS_UNITS);
+      records.push({
+        id: rid++, date: ds, business_unit: bu,
+        branch: rng.choice(BRANCHES[bu]),
+        teacher: rng.choice(TEACHERS),
+        revenue: Math.round(rng.choice(POOL) * growth),
+      });
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return records;
+}
+
+const ALL_DATA = generateData();
+
+// ── App State ──────────────────────────────────────────────────────────────
+const state = { dateStart: '2025-01-01', dateEnd: '2026-05-17', bu: 'All', branch: 'All', teacher: 'All', period: '월' };
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function krw(v)  { return `₩${v.toLocaleString('ko-KR')}`; }
+function pd(s)   { return new Date(s + 'T00:00:00'); }
+function ds(d)   { return d.toISOString().slice(0, 10); }
+function zeroPad(n) { return String(n).padStart(2, '0'); }
+
+function delta(cur, prev) {
+  if (prev === 0) return { text: '—', cls: 'neu' };
+  const v = (cur - prev) / prev * 100;
+  return { text: `${v >= 0 ? '▲' : '▼'} ${Math.abs(v).toFixed(1)}%`, cls: v >= 0 ? 'pos' : 'neg' };
+}
+
+function filtered() {
+  const s = pd(state.dateStart), e = pd(state.dateEnd);
+  return ALL_DATA.filter(r => {
+    const d = pd(r.date);
+    return d >= s && d <= e
+      && (state.bu      === 'All' || r.business_unit === state.bu)
+      && (state.branch  === 'All' || r.branch  === state.branch)
+      && (state.teacher === 'All' || r.teacher === state.teacher);
+  });
+}
+
+function isDefault() { return state.bu === 'All' && state.branch === 'All' && state.teacher === 'All'; }
+
+function groupKey(dateStr, period) {
+  const d = pd(dateStr);
+  const Y = d.getFullYear(), M = d.getMonth() + 1, D = d.getDate();
+  if (period === '연') return `${Y}년`;
+  if (period === '월') return `${Y}년 ${zeroPad(M)}월`;
+  if (period === '일') return `${zeroPad(M)}/${zeroPad(D)}`;
+  // 주: Monday of the week
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const mon = new Date(d); mon.setDate(diff);
+  return `${zeroPad(mon.getMonth()+1)}/${zeroPad(mon.getDate())}주`;
+}
+
+function groupByPeriod(records, period) {
+  const map = new Map();
+  records.forEach(r => {
+    const k = groupKey(r.date, period);
+    if (!map.has(k)) map.set(k, { revenue: 0, count: 0 });
+    const g = map.get(k);
+    g.revenue += r.revenue; g.count++;
+  });
+  return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([label, g]) => ({ label, ...g }));
+}
+
+// ── KPI ───────────────────────────────────────────────────────────────────
+function renderKPI() {
+  const now = new Date();
+  const cy = now.getFullYear(), cm = now.getMonth() + 1, cd = now.getDate(), py = cy - 1;
+  const todayStr = `${cy}-${zeroPad(cm)}-${zeroPad(cd)}`;
+  const prevStr  = `${py}-${zeroPad(cm)}-${zeroPad(cd)}`;
+
+  const sum = (fn) => ALL_DATA.filter(fn).reduce((s, r) => s + r.revenue, 0);
+  const dayCY  = sum(r => r.date === todayStr);
+  const dayPY  = sum(r => r.date === prevStr);
+  const monCY  = sum(r => { const d = pd(r.date); return d.getFullYear()===cy && d.getMonth()+1===cm; });
+  const monPY  = sum(r => { const d = pd(r.date); return d.getFullYear()===py && d.getMonth()+1===cm; });
+  const ytdCY  = sum(r => pd(r.date).getFullYear()===cy);
+  const ytdPY  = sum(r => pd(r.date).getFullYear()===py && r.date<=prevStr);
+
+  const kpis = [
+    { label: `${cy}년 ${cm}월 ${cd}일 매출`,  value: krw(dayCY), d: delta(dayCY, dayPY) },
+    { label: `${cy}년 ${cm}월 매출`,           value: krw(monCY), d: delta(monCY, monPY) },
+    { label: `${py}년 ${cm}월 ${cd}일 매출`,  value: krw(dayPY), d: { text: '전년 동일', cls: 'neu' } },
+    { label: `${py}년 ${cm}월 매출`,           value: krw(monPY), d: { text: '전년 동일', cls: 'neu' } },
+    { label: `${cy}년 총 매출 (YTD)`,          value: krw(ytdCY), d: delta(ytdCY, ytdPY) },
+  ];
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k => `
+    <div class="kpi-card">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-delta ${k.d.cls}">${k.d.text}</div>
+    </div>`).join('');
+}
+
+// ── Chart ─────────────────────────────────────────────────────────────────
+function renderChart() {
+  const view = filtered();
+  const rotated = ['주','일'].includes(state.period);
+  const layout = {
+    paper_bgcolor:'#131722', plot_bgcolor:'#131722',
+    font:{ color:'#94a3b8', family:'Inter, sans-serif', size:11 },
+    height: isDefault() ? 320 : 290,
+    margin:{ t:10, b: rotated ? 80 : 10, l:65, r:20 },
+    xaxis:{ showgrid:false, showline:false, tickfont:{color:'#64748b',size:11}, tickangle: rotated ? 90 : 0 },
+    yaxis:{ showgrid:true, gridcolor:'#1a2640', zeroline:false, tickfont:{color:'#64748b',size:11}, tickformat:'~s' },
+    legend:{ orientation:'h', yanchor:'bottom', y:1.02, xanchor:'right', x:1, font:{size:10,color:'#94a3b8'}, bgcolor:'rgba(0,0,0,0)' },
+    dragmode:false, hovermode:'x unified',
+    hoverlabel:{ bgcolor:'#1a2035', bordercolor:'#2d3748', font:{color:'#e2e8f0',size:12} },
+  };
+  const traces = [];
+
+  if (isDefault()) {
+    BUSINESS_UNITS.forEach(bu => {
+      const g = groupByPeriod(view.filter(r => r.business_unit === bu), state.period);
+      if (!g.length) return;
+      const color = BU_COLORS[bu] || '#94a3b8';
+      traces.push({ x:g.map(r=>r.label), y:g.map(r=>r.revenue), mode:'lines+markers', name:bu,
+        line:{color,width:2,shape:'spline'}, marker:{size:5,color,line:{color:'#131722',width:1}},
+        hovertemplate:`<b>${bu}</b> %{x}<br>₩%{y:,.0f}<extra></extra>` });
+    });
+  } else {
+    const g = groupByPeriod(view, state.period);
+    const cy = new Date().getFullYear(), py = cy - 1;
+    const priorRng = mkRng(77);
+    const prior = g.map(r => Math.round(r.revenue * priorRng.uniform(0.70, 0.86)));
+    if (g.length) {
+      traces.push({ x:g.map(r=>r.label), y:g.map(r=>r.revenue), mode:'lines+markers', name:String(cy),
+        line:{color:'#4facfe',width:2.5,shape:'spline'},
+        marker:{size:7,color:'#4facfe',line:{color:'#131722',width:2}},
+        fill:'tozeroy', fillcolor:'rgba(79,172,254,0.06)',
+        hovertemplate:'<b>%{x}</b><br>₩%{y:,.0f}<extra></extra>' });
+      traces.push({ x:g.map(r=>r.label), y:prior, mode:'lines+markers', name:String(py),
+        line:{color:'#00d4aa',width:2,shape:'spline',dash:'dot'},
+        marker:{size:6,color:'#00d4aa',line:{color:'#131722',width:2}},
+        hovertemplate:'<b>%{x}</b><br>₩%{y:,.0f}<extra></extra>' });
+    }
+  }
+  Plotly.react('mainChart', traces, layout, { displayModeBar:false, scrollZoom:false, responsive:true });
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────
+function renderTable() {
+  const view = filtered();
+  const head = document.getElementById('tHead');
+  const body = document.getElementById('tBody');
+  const foot = document.getElementById('tFoot');
+
+  if (isDefault()) {
+    const map = new Map();
+    view.forEach(r => {
+      if (!map.has(r.business_unit)) map.set(r.business_unit, {rev:0,cnt:0});
+      const g = map.get(r.business_unit); g.rev += r.revenue; g.cnt++;
+    });
+    const rows = [...map.entries()].sort((a,b)=>b[1].rev-a[1].rev);
+    head.innerHTML = '<tr><th>사업국</th><th>매출합계</th><th>거래건수</th></tr>';
+    body.innerHTML = rows.map(([bu,g])=>`<tr><td>${bu}</td><td>${krw(g.rev)}</td><td>${g.cnt.toLocaleString()}</td></tr>`).join('');
+    foot.textContent = `총 ${rows.length}개 사업국`;
+  } else {
+    const rows = groupByPeriod(view, state.period).reverse();
+    head.innerHTML = '<tr><th>기간</th><th>매출합계</th><th>거래건수</th></tr>';
+    body.innerHTML = rows.map(g=>`<tr><td>${g.label}</td><td>${krw(g.revenue)}</td><td>${g.count.toLocaleString()}</td></tr>`).join('');
+    foot.textContent = `총 ${rows.length}개 항목`;
+  }
+}
+
+// ── Teacher Profile ────────────────────────────────────────────────────────
+function renderTeacher() {
+  const panel = document.getElementById('teacherPanel');
+  if (state.teacher === 'All') {
+    panel.innerHTML = `<div class="teacher-empty">상단 필터에서 교사를 선택하면 프로필과 인사 이력이 표시됩니다.</div>`;
+    return;
+  }
+  const t = state.teacher, idx = TEACHERS.indexOf(t);
+  const rng = mkRng(idx * 7 + 13);
+  const [c1, c2] = AVATAR_COLORS[idx % AVATAR_COLORS.length];
+  const parts = t.split('-');
+  const initials = parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : t[0].toUpperCase();
+
+  const startYear  = rng.randint(2018, 2022);
+  const startMonth = rng.randint(1, 12);
+  let cur = new Date(startYear, startMonth - 1, 1);
+  const nRec = rng.randint(3, 5);
+  const history = [];
+  for (let i = 0; i < nRec; i++) {
+    const branch = rng.choice(ALL_BRANCHES);
+    const team   = rng.choice(TEAM_LABELS);
+    const pos    = POSITION_LABELS[Math.min(i, POSITION_LABELS.length - 1)];
+    const lvl    = LEVEL_LABELS[Math.min(i, LEVEL_LABELS.length - 1)];
+    const duty   = rng.choice(DUTY_LABELS);
+    const days   = rng.randint(180, 720);
+    history.push({ 발령일자:`${cur.getFullYear()}.${zeroPad(cur.getMonth()+1)}.${zeroPad(cur.getDate())}`, 근무지점:branch, 관리팀:team, 직책:pos, 직급:lvl, 직무:duty });
+    cur = new Date(cur.getTime() + days * 86400000);
+  }
+
+  const joinDate = new Date(startYear, startMonth - 1, 1);
+  const years    = Math.floor((Date.now() - joinDate.getTime()) / (365.25 * 86400000));
+  const curLevel = LEVEL_LABELS[Math.min(nRec - 1, LEVEL_LABELS.length - 1)];
+  const tRev     = ALL_DATA.filter(r => r.teacher === t).reduce((s,r) => s + r.revenue, 0);
+  const tCnt     = ALL_DATA.filter(r => r.teacher === t).length;
+  const joinStr  = `${startYear}.${zeroPad(startMonth)}.01`;
+
+  panel.innerHTML = `
+    <div class="teacher-content">
+      <div class="teacher-card">
+        <div class="teacher-avatar" style="background:linear-gradient(135deg,${c1} 0%,${c2} 100%)">${initials}</div>
+        <div>
+          <div class="teacher-name">${t}</div>
+          <div class="teacher-badge">${curLevel}</div>
+        </div>
+        <div class="info-list">
+          <div class="info-row"><span class="info-lbl">입사일</span><span class="info-val">${joinStr}</span></div>
+          <div class="info-row"><span class="info-lbl">근속연수</span><span class="info-val">${years}년</span></div>
+          <div class="info-row"><span class="info-lbl">누적 매출</span><span class="info-val hi">₩${Math.floor(tRev/1000000).toLocaleString()}M</span></div>
+          <div class="info-row"><span class="info-lbl">총 거래 건수</span><span class="info-val">${tCnt}건</span></div>
+        </div>
+      </div>
+      <div class="teacher-history">
+        <div class="history-title">인사 이력</div>
+        <table class="data-table">
+          <thead><tr><th>발령일자</th><th>근무지점</th><th>관리팀</th><th>직책</th><th>직급</th><th>직무</th></tr></thead>
+          <tbody>${history.map(h=>`<tr><td>${h.발령일자}</td><td>${h.근무지점}</td><td>${h.관리팀}</td><td>${h.직책}</td><td>${h.직급}</td><td>${h.직무}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ── Branch dropdown update ─────────────────────────────────────────────────
+function updateBranches() {
+  const sel = document.getElementById('branchSel');
+  const list = state.bu !== 'All' ? BRANCHES[state.bu] : ALL_BRANCHES;
+  sel.innerHTML = '<option value="All">All</option>' + list.map(b=>`<option value="${b}">${b}</option>`).join('');
+  sel.value = 'All';
+}
+
+// ── Full render ────────────────────────────────────────────────────────────
+function render() { renderKPI(); renderChart(); renderTable(); renderTeacher(); }
+
+// ── Init dropdowns ─────────────────────────────────────────────────────────
+function initDropdowns() {
+  const buSel = document.getElementById('buSel');
+  BUSINESS_UNITS.forEach(bu => buSel.insertAdjacentHTML('beforeend', `<option value="${bu}">${bu}</option>`));
+  updateBranches();
+  const tSel = document.getElementById('teacherSel');
+  TEACHERS.forEach(t => tSel.insertAdjacentHTML('beforeend', `<option value="${t}">${t}</option>`));
+}
+
+// ── Events ────────────────────────────────────────────────────────────────
+document.getElementById('dateStart').addEventListener('change', e => { state.dateStart = e.target.value; render(); });
+document.getElementById('dateEnd').addEventListener('change',   e => { state.dateEnd   = e.target.value; render(); });
+document.getElementById('buSel').addEventListener('change', e => {
+  state.bu = e.target.value; state.branch = 'All'; updateBranches(); render();
+});
+document.getElementById('branchSel').addEventListener('change',  e => { state.branch  = e.target.value; render(); });
+document.getElementById('teacherSel').addEventListener('change', e => { state.teacher = e.target.value; render(); });
+document.getElementById('resetBtn').addEventListener('click', () => {
+  state.bu = 'All'; state.branch = 'All'; state.teacher = 'All';
+  ['buSel','branchSel','teacherSel'].forEach(id => document.getElementById(id).value = 'All');
+  updateBranches(); render();
+});
+document.querySelectorAll('.period-btn').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.period = btn.dataset.p;
+  renderChart(); renderTable();
+}));
+
+// ── Boot ─────────────────────────────────────────────────────────────────
+initDropdowns();
+render();
+</script>
+</body>
+</html>
