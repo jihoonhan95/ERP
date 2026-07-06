@@ -48,6 +48,18 @@
     .date-input:focus { border-color: #4facfe; box-shadow: 0 0 0 2px rgba(79,172,254,0.15); }
     input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.4); cursor: pointer; }
 
+    .date-shortcuts { display: flex; flex-direction: column; gap: 0; flex-shrink: 0; }
+    .date-shortcuts label { display: block; font-size: 11px; color: transparent; margin-bottom: 4px; user-select: none; }
+    .shortcut-btns { display: flex; gap: 6px; }
+    .shortcut-btn {
+      background: #1a2035; border: 1px solid #2d3748; color: #94a3b8;
+      border-radius: 8px; font-size: 12px; font-weight: 500;
+      padding: 0 14px; height: 38px; cursor: pointer;
+      font-family: 'Inter', sans-serif; white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .shortcut-btn:hover { border-color: #4facfe; color: #4facfe; }
+
     .divider { border: none; border-top: 1px solid #1e2d3d; margin: 4px 0 20px; }
 
     /* ── KPI ── */
@@ -188,6 +200,13 @@
     <div class="date-group">
       <label>종료일</label>
       <input type="date" id="dateEnd" class="date-input" value="2026-05-17" min="2025-01-01" max="2026-05-17">
+    </div>
+    <div class="date-shortcuts">
+      <label>&nbsp;</label>
+      <div class="shortcut-btns">
+        <button class="shortcut-btn" id="btn1year">1년</button>
+        <button class="shortcut-btn" id="btn1month">한달</button>
+      </div>
     </div>
   </div>
 
@@ -559,6 +578,37 @@ function initDropdowns() {
 // ── Events ────────────────────────────────────────────────────────────────
 document.getElementById('dateStart').addEventListener('change', e => { state.dateStart = e.target.value; render(); });
 document.getElementById('dateEnd').addEventListener('change',   e => { state.dateEnd   = e.target.value; render(); });
+
+function clampDate(d) {
+  const min = '2025-01-01', max = '2026-05-17';
+  if (d < min) return min;
+  if (d > max) return max;
+  return d;
+}
+
+function setDateRange(start, end) {
+  const s = clampDate(start), e = clampDate(end);
+  state.dateStart = s; state.dateEnd = e;
+  document.getElementById('dateStart').value = s;
+  document.getElementById('dateEnd').value   = e;
+  render();
+}
+
+document.getElementById('btn1year').addEventListener('click', () => {
+  const today = new Date();
+  const oneYearAgo = new Date(today);
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  oneYearAgo.setDate(oneYearAgo.getDate() + 1);
+  setDateRange(ds(oneYearAgo), ds(today));
+});
+
+document.getElementById('btn1month').addEventListener('click', () => {
+  const today = new Date();
+  const oneMonthAgo = new Date(today);
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  oneMonthAgo.setDate(oneMonthAgo.getDate() + 1);
+  setDateRange(ds(oneMonthAgo), ds(today));
+});
 document.getElementById('buSel').addEventListener('change', e => {
   state.bu = e.target.value; state.branch = 'All'; updateBranches(); render();
 });
