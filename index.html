@@ -219,7 +219,6 @@
       <div class="period-tabs">
         <button class="period-btn" data-p="연">연</button>
         <button class="period-btn active" data-p="월">월</button>
-        <button class="period-btn" data-p="주">주</button>
         <button class="period-btn" data-p="일">일</button>
       </div>
     </div>
@@ -361,12 +360,7 @@ function groupKey(dateStr, period) {
   const Y = d.getFullYear(), M = d.getMonth() + 1, D = d.getDate();
   if (period === '연') return `${Y}년`;
   if (period === '월') return `${Y}년 ${zeroPad(M)}월`;
-  if (period === '일') return `${zeroPad(M)}/${zeroPad(D)}`;
-  // 주: Monday of the week
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const mon = new Date(d); mon.setDate(diff);
-  return `${zeroPad(mon.getMonth()+1)}/${zeroPad(mon.getDate())}주`;
+  return `${zeroPad(M)}/${zeroPad(D)}`;
 }
 
 function groupByPeriod(records, period) {
@@ -413,7 +407,7 @@ function renderKPI() {
 // ── Chart ─────────────────────────────────────────────────────────────────
 function renderChart() {
   const view = filtered();
-  const rotated = ['주','일'].includes(state.period);
+  const rotated = state.period === '일';
   const layout = {
     paper_bgcolor:'#131722', plot_bgcolor:'#131722',
     font:{ color:'#94a3b8', family:'Inter, sans-serif', size:11 },
