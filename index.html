@@ -324,16 +324,17 @@ function generateData() {
   const rng = mkRng(42);
   const records = [];
   let rid = 1;
-  const end = new Date('2026-05-17T00:00:00');
+  const end = new Date(); end.setHours(0, 0, 0, 0);
   let d = new Date('2025-01-01T00:00:00');
   while (d <= end) {
-    const growth = d.getFullYear() === 2026 ? 1.15 : 1.0;
+    const yr = d.getFullYear();
+    const growth = yr === 2026 ? 1.15 : yr === 2027 ? 1.32 : 1.0;
     const n = rng.randint(7, 9);
-    const ds = d.toISOString().slice(0, 10);
+    const dateStr = d.toISOString().slice(0, 10);
     for (let i = 0; i < n; i++) {
       const bu = rng.choice(BUSINESS_UNITS);
       records.push({
-        id: rid++, date: ds, business_unit: bu,
+        id: rid++, date: dateStr, business_unit: bu,
         branch: rng.choice(BRANCHES[bu]),
         teacher: rng.choice(TEACHERS),
         revenue: Math.round(rng.choice(POOL) * growth),
