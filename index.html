@@ -461,7 +461,7 @@ function renderChart() {
 
   if (isDefault()) {
     BUSINESS_UNITS.forEach(bu => {
-      const g = groupByPeriod(view.filter(r => r.business_unit === bu), state.period);
+      const g = groupByPeriod(view.filter(r => r.business_unit === bu), state.period).slice(0, 30);
       if (!g.length) return;
       const color = BU_COLORS[bu] || '#94a3b8';
       traces.push({ x:g.map(r=>r.label), y:g.map(r=>r.revenue), mode:'lines+markers', name:bu,
@@ -469,7 +469,7 @@ function renderChart() {
         hovertemplate:`<b>${bu}</b> %{x}<br>₩%{y:,.0f}<extra></extra>` });
     });
   } else {
-    const g = groupByPeriod(view, state.period);
+    const g = groupByPeriod(view, state.period).slice(0, 30);
     const cy = new Date().getFullYear(), py = cy - 1;
     const priorRng = mkRng(77);
     const prior = g.map(r => Math.round(r.revenue * priorRng.uniform(0.70, 0.86)));
@@ -595,8 +595,24 @@ function initDropdowns() {
 }
 
 // ── Events ────────────────────────────────────────────────────────────────
-document.getElementById('dateStart').addEventListener('change', e => { state.dateStart = e.target.value; render(); });
-document.getElementById('dateEnd').addEventListener('change',   e => { state.dateEnd   = e.target.value; render(); });
+function checkYearRange() {
+  const startY = parseInt(state.dateStart.slice(0, 4), 10);
+  const endY   = parseInt(state.dateEnd.slice(0, 4), 10);
+  if (endY - startY > 30) {
+    alert('30년 이내로 설정 해주십시오');
+    return false;
+  }
+  return true;
+}
+
+document.getElementById('dateStart').addEventListener('change', e => {
+  state.dateStart = e.target.value;
+  if (checkYearRange()) render();
+});
+document.getElementById('dateEnd').addEventListener('change', e => {
+  state.dateEnd = e.target.value;
+  if (checkYearRange()) render();
+});
 
 function clampDate(d) {
   if (d < '1990-01-01') return '1990-01-01';
