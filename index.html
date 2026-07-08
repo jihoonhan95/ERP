@@ -423,7 +423,7 @@ function groupKey(dateStr, period) {
   const Y = dateStr.slice(0, 4), M = dateStr.slice(5, 7), D = dateStr.slice(8, 10);
   if (period === '연') return `${Y}년`;
   if (period === '월') return `${Y}년 ${M}월`;
-  return `${Y}-${M}-${D}`;
+  return `${Y}.${M}.${D}`;
 }
 
 function groupByPeriod(records, period) {
@@ -503,12 +503,9 @@ function renderChart() {
       const next = new Date(d); next.setDate(day + 1);
       return next.getMonth() !== d.getMonth();
     });
-    layout.xaxis.tickvals = tickDates;
-    layout.xaxis.ticktext = tickDates.map(dt => {
-      const m = parseInt(dt.slice(5, 7), 10);
-      const d = parseInt(dt.slice(8, 10), 10);
-      return `${m}/${d}`;
-    });
+    const tickLabels = tickDates.map(dt => dt.replace(/-/g, '.'));
+    layout.xaxis.tickvals = tickLabels;
+    layout.xaxis.ticktext = tickLabels;
   }
 
   if (isDefault()) {
