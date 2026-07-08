@@ -390,8 +390,9 @@ const ALL_DATA = generateData();
 
 // ── App State ──────────────────────────────────────────────────────────────
 const _today = new Date();
-const _oneYearAgo = new Date(_today); _oneYearAgo.setFullYear(_oneYearAgo.getFullYear() - 1); _oneYearAgo.setDate(_oneYearAgo.getDate() + 1);
-const DEFAULT_END   = clampDate(ds(_today));
+const _yesterday = new Date(_today); _yesterday.setDate(_yesterday.getDate() - 1);
+const _oneYearAgo = new Date(_yesterday); _oneYearAgo.setFullYear(_oneYearAgo.getFullYear() - 1); _oneYearAgo.setDate(_oneYearAgo.getDate() + 1);
+const DEFAULT_END   = clampDate(ds(_yesterday));
 const DEFAULT_START = clampDate(ds(_oneYearAgo));
 const state = { dateStart: DEFAULT_START, dateEnd: DEFAULT_END, bu: 'All', branch: 'All', teacher: 'All', period: '월' };
 
@@ -701,19 +702,19 @@ function setDateRange(start, end) {
 }
 
 document.getElementById('btn1year').addEventListener('click', () => {
-  const today = new Date();
-  const oneYearAgo = new Date(today);
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  const oneYearAgo = new Date(yesterday);
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
   oneYearAgo.setDate(oneYearAgo.getDate() + 1);
-  setDateRange(ds(oneYearAgo), ds(today));
+  setDateRange(ds(oneYearAgo), ds(yesterday));
 });
 
 document.getElementById('btn1month').addEventListener('click', () => {
-  const today = new Date();
-  const oneMonthAgo = new Date(today);
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  const oneMonthAgo = new Date(yesterday);
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
   oneMonthAgo.setDate(oneMonthAgo.getDate() + 1);
-  setDateRange(ds(oneMonthAgo), ds(today));
+  setDateRange(ds(oneMonthAgo), ds(yesterday));
 });
 document.getElementById('buSel').addEventListener('change', e => {
   state.bu = e.target.value; state.branch = 'All'; updateBranches(); render();
