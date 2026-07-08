@@ -475,13 +475,12 @@ function renderKPI() {
 // ── Chart ─────────────────────────────────────────────────────────────────
 function renderChart() {
   const view = filtered();
-  const rotated = state.period === '일';
   const layout = {
     paper_bgcolor:'#131722', plot_bgcolor:'#131722',
     font:{ color:'#94a3b8', family:'Inter, sans-serif', size:11 },
     height: isDefault() ? 320 : 290,
-    margin:{ t:10, b: rotated ? 80 : 10, l:65, r:20 },
-    xaxis:{ showgrid:false, showline:false, tickfont:{color:'#64748b',size:11}, tickangle: rotated ? 90 : 0 },
+    margin:{ t:10, b:10, l:65, r:20 },
+    xaxis:{ showgrid:false, showline:false, tickfont:{color:'#64748b',size:11}, tickangle: 0 },
     yaxis:{ showgrid:true, gridcolor:'#1a2640', zeroline:false, tickfont:{color:'#64748b',size:11}, tickformat:'~s' },
     legend:{ orientation:'h', yanchor:'bottom', y:1.02, xanchor:'right', x:1, font:{size:10,color:'#94a3b8'}, bgcolor:'rgba(0,0,0,0)' },
     dragmode:false, hovermode:'x unified',
@@ -507,7 +506,7 @@ function renderChart() {
     layout.xaxis.hoverformat = '%Y.%m.%d';
     layout.xaxis.tickmode = 'array';
     layout.xaxis.tickvals = tickDates;
-    layout.xaxis.ticktext = tickDates.map(dt => dt.replace(/-/g, '.'));
+    layout.xaxis.ticktext = tickDates.map(dt => `${dt.slice(5,7)}.${dt.slice(8,10)}`);
   }
 
   if (isDefault()) {
