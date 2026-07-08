@@ -491,6 +491,24 @@ function renderChart() {
 
   const maxPoints = state.period === '일' ? 31 : 30;
 
+  // 일 단위: 1일·10일·20일·말일만 tick 표시
+  if (state.period === '일') {
+    const dates = [...new Set(view.map(r => r.date))].sort().slice(0, 31);
+    const tickDates = dates.filter(dt => {
+      const day = parseInt(dt.slice(8, 10), 10);
+      if (day === 1 || day === 10 || day === 20) return true;
+      const d = new Date(dt + 'T00:00:00');
+      const next = new Date(d); next.setDate(day + 1);
+      return next.getMonth() !== d.getMonth();
+    });
+    layout.xaxis.tickvals = tickDates;
+    layout.xaxis.ticktext = tickDates.map(dt => {
+      const m = parseInt(dt.slice(5, 7), 10);
+      const d = parseInt(dt.slice(8, 10), 10);
+      return `${m}/${d}`;
+    });
+  }
+
   if (isDefault()) {
     BUSINESS_UNITS.forEach(bu => {
       const g = groupByPeriod(view.filter(r => r.business_unit === bu), state.period).slice(0, maxPoints);
