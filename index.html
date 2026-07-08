@@ -321,16 +321,25 @@ function mkRng(seed) {
   return api;
 }
 
-// ── Generate seed data ─────────────────────────────────────────────────────
+// ── Generate seed data (1990-01-01 ~ today) ───────────────────────────────
+function yearGrowth(yr) {
+  if (yr < 2000) return 0.30 + (yr - 1990) * 0.030;  // 0.30 → 0.57
+  if (yr < 2010) return 0.60 + (yr - 2000) * 0.040;  // 0.60 → 0.96
+  if (yr < 2020) return 1.00;
+  if (yr <= 2021) return 0.85;                         // COVID 영향
+  if (yr === 2026) return 1.15;
+  if (yr >= 2027) return 1.32;
+  return 1.00;
+}
+
 function generateData() {
   const rng = mkRng(42);
   const records = [];
   let rid = 1;
   const end = new Date(); end.setHours(0, 0, 0, 0);
-  let d = new Date('2025-01-01T00:00:00');
+  let d = new Date('1990-01-01T00:00:00');
   while (d <= end) {
-    const yr = d.getFullYear();
-    const growth = yr === 2026 ? 1.15 : yr === 2027 ? 1.32 : 1.0;
+    const growth = yearGrowth(d.getFullYear());
     const n = rng.randint(7, 9);
     const dateStr = d.toISOString().slice(0, 10);
     for (let i = 0; i < n; i++) {
@@ -369,24 +378,22 @@ function delta(cur, prev) {
 }
 
 function filtered() {
-  const s = pd(state.dateStart), e = pd(state.dateEnd);
-  return ALL_DATA.filter(r => {
-    const d = pd(r.date);
-    return d >= s && d <= e
-      && (state.bu      === 'All' || r.business_unit === state.bu)
-      && (state.branch  === 'All' || r.branch  === state.branch)
-      && (state.teacher === 'All' || r.teacher === state.teacher);
-  });
+  const s = state.dateStart, e = state.dateEnd;
+  return ALL_DATA.filter(r =>
+    r.date >= s && r.date <= e
+    && (state.bu      === 'All' || r.business_unit === state.bu)
+    && (state.branch  === 'All' || r.branch        === state.branch)
+    && (state.teacher === 'All' || r.teacher       === state.teacher)
+  );
 }
 
 function isDefault() { return state.bu === 'All' && state.branch === 'All' && state.teacher === 'All'; }
 
 function groupKey(dateStr, period) {
-  const d = pd(dateStr);
-  const Y = d.getFullYear(), M = d.getMonth() + 1, D = d.getDate();
+  const Y = dateStr.slice(0, 4), M = dateStr.slice(5, 7), D = dateStr.slice(8, 10);
   if (period === '연') return `${Y}년`;
-  if (period === '월') return `${Y}년 ${zeroPad(M)}월`;
-  return `${zeroPad(M)}/${zeroPad(D)}`;
+  if (period === '월') return `${Y}년 ${M}월`;
+  return `${Y}-${M}-${D}`;
 }
 
 function groupByPeriod(records, period) {
@@ -407,13 +414,18 @@ function renderKPI() {
   const todayStr = `${cy}-${zeroPad(cm)}-${zeroPad(cd)}`;
   const prevStr  = `${py}-${zeroPad(cm)}-${zeroPad(cd)}`;
 
-  const sum = (fn) => ALL_DATA.filter(fn).reduce((s, r) => s + r.revenue, 0);
-  const dayCY  = sum(r => r.date === todayStr);
-  const dayPY  = sum(r => r.date === prevStr);
-  const monCY  = sum(r => { const d = pd(r.date); return d.getFullYear()===cy && d.getMonth()+1===cm; });
-  const monPY  = sum(r => { const d = pd(r.date); return d.getFullYear()===py && d.getMonth()+1===cm; });
-  const ytdCY  = sum(r => pd(r.date).getFullYear()===cy);
-  const ytdPY  = sum(r => pd(r.date).getFullYear()===py && r.date<=prevStr);
+  const cyPfx = `${cy}-`, pyPfx = `${py}-`;
+  const cyMonPfx = `${cy}-${zeroPad(cm)}-`, pyMonPfx = `${py}-${zeroPad(cm)}-`;
+  let dayCY=0, dayPY=0, monCY=0, monPY=0, ytdCY=0, ytdPY=0;
+  ALL_DATA.forEach(r => {
+    const v = r.revenue, dt = r.date;
+    if (dt === todayStr)             dayCY += v;
+    if (dt === prevStr)              dayPY += v;
+    if (dt.startsWith(cyMonPfx))     monCY += v;
+    if (dt.startsWith(pyMonPfx))     monPY += v;
+    if (dt.startsWith(cyPfx))        ytdCY += v;
+    if (dt.startsWith(pyPfx) && dt <= prevStr) ytdPY += v;
+  });
 
   const kpis = [
     { label: `${cy}년 ${cm}월 ${cd}일 매출`,  value: krw(dayCY), d: delta(dayCY, dayPY) },
