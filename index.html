@@ -489,9 +489,11 @@ function renderChart() {
   };
   const traces = [];
 
+  const maxPoints = state.period === '일' ? 31 : 30;
+
   if (isDefault()) {
     BUSINESS_UNITS.forEach(bu => {
-      const g = groupByPeriod(view.filter(r => r.business_unit === bu), state.period).slice(0, 30);
+      const g = groupByPeriod(view.filter(r => r.business_unit === bu), state.period).slice(0, maxPoints);
       if (!g.length) return;
       const color = BU_COLORS[bu] || '#94a3b8';
       traces.push({ x:g.map(r=>r.label), y:g.map(r=>r.revenue), mode:'lines+markers', name:bu,
@@ -499,7 +501,7 @@ function renderChart() {
         hovertemplate:`<b>${bu}</b> %{x}<br>₩%{y:,.0f}<extra></extra>` });
     });
   } else {
-    const g = groupByPeriod(view, state.period).slice(0, 30);
+    const g = groupByPeriod(view, state.period).slice(0, maxPoints);
     const cy = new Date().getFullYear(), py = cy - 1;
     const priorRng = mkRng(77);
     const prior = g.map(r => Math.round(r.revenue * priorRng.uniform(0.70, 0.86)));
@@ -647,6 +649,13 @@ function checkDateRange() {
   if (state.period === '월' && (eY * 12 + eM) - (sY * 12 + sM) > 30) {
     showAlert('30개월 이내로 설정 해주십시오');
     return false;
+  }
+  if (state.period === '일') {
+    const diffDays = Math.round((new Date(state.dateEnd) - new Date(state.dateStart)) / 86400000);
+    if (diffDays > 31) {
+      showAlert('31일 이내로 설정 해주십시오');
+      return false;
+    }
   }
   return true;
 }
