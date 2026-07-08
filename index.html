@@ -185,9 +185,39 @@
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: #0d1117; }
     ::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 3px; }
+
+    /* ── Custom Alert Modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 9999;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: #1a2035; border: 1px solid #2d3748;
+      border-radius: 14px; padding: 28px 32px 24px;
+      min-width: 280px; max-width: 360px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+    .modal-msg { color: #e2e8f0; font-size: 14px; font-weight: 500; margin-bottom: 22px; line-height: 1.6; }
+    .modal-ok {
+      background: #1e3a5f; border: 1px solid rgba(79,172,254,0.4);
+      color: #4facfe; border-radius: 8px; padding: 8px 32px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      font-family: 'Inter', sans-serif; transition: all 0.15s;
+    }
+    .modal-ok:hover { background: #264d7a; }
   </style>
 </head>
 <body>
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <div class="modal-msg" id="modalMsg"></div>
+    <button class="modal-ok" id="modalOk">확인</button>
+  </div>
+</div>
+
 <div class="container">
 
   <!-- Top Bar -->
@@ -594,6 +624,15 @@ function initDropdowns() {
   TEACHERS.forEach(t => tSel.insertAdjacentHTML('beforeend', `<option value="${t}">${t}</option>`));
 }
 
+// ── Custom Alert ──────────────────────────────────────────────────────────
+function showAlert(msg) {
+  document.getElementById('modalMsg').textContent = msg;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+document.getElementById('modalOk').addEventListener('click', () => {
+  document.getElementById('modalOverlay').classList.remove('show');
+});
+
 // ── Events ────────────────────────────────────────────────────────────────
 function checkDateRange() {
   const sY = parseInt(state.dateStart.slice(0, 4), 10);
@@ -602,11 +641,11 @@ function checkDateRange() {
   const eM = parseInt(state.dateEnd.slice(5, 7), 10);
 
   if (state.period === '연' && eY - sY > 30) {
-    alert('30년 이내로 설정 해주십시오');
+    showAlert('30년 이내로 설정 해주십시오');
     return false;
   }
   if (state.period === '월' && (eY * 12 + eM) - (sY * 12 + sM) > 30) {
-    alert('30개월 이내로 설정 해주십시오');
+    showAlert('30개월 이내로 설정 해주십시오');
     return false;
   }
   return true;
