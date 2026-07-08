@@ -491,10 +491,12 @@ function renderChart() {
 
   const maxPoints = state.period === '일' ? 31 : 30;
 
-  // 일 단위: 1일·10일·20일·말일만 tick 표시
+  // 일 단위: 첫날·1일·10일·20일·말일·마지막날 tick 표시
   if (state.period === '일') {
     const dates = [...new Set(view.map(r => r.date))].sort().slice(0, 31);
+    const first = dates[0], last = dates[dates.length - 1];
     const tickDates = dates.filter(dt => {
+      if (dt === first || dt === last) return true;
       const day = parseInt(dt.slice(8, 10), 10);
       if (day === 1 || day === 10 || day === 20) return true;
       const d = new Date(dt + 'T00:00:00');
