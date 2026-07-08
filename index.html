@@ -595,11 +595,18 @@ function initDropdowns() {
 }
 
 // ── Events ────────────────────────────────────────────────────────────────
-function checkYearRange() {
-  const startY = parseInt(state.dateStart.slice(0, 4), 10);
-  const endY   = parseInt(state.dateEnd.slice(0, 4), 10);
-  if (endY - startY > 30) {
+function checkDateRange() {
+  const sY = parseInt(state.dateStart.slice(0, 4), 10);
+  const sM = parseInt(state.dateStart.slice(5, 7), 10);
+  const eY = parseInt(state.dateEnd.slice(0, 4), 10);
+  const eM = parseInt(state.dateEnd.slice(5, 7), 10);
+
+  if (state.period === '연' && eY - sY > 30) {
     alert('30년 이내로 설정 해주십시오');
+    return false;
+  }
+  if (state.period === '월' && (eY * 12 + eM) - (sY * 12 + sM) > 30) {
+    alert('30개월 이내로 설정 해주십시오');
     return false;
   }
   return true;
@@ -607,11 +614,11 @@ function checkYearRange() {
 
 document.getElementById('dateStart').addEventListener('change', e => {
   state.dateStart = e.target.value;
-  if (checkYearRange()) render();
+  if (checkDateRange()) render();
 });
 document.getElementById('dateEnd').addEventListener('change', e => {
   state.dateEnd = e.target.value;
-  if (checkYearRange()) render();
+  if (checkDateRange()) render();
 });
 
 function clampDate(d) {
@@ -656,7 +663,7 @@ document.querySelectorAll('.period-btn').forEach(btn => btn.addEventListener('cl
   document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   state.period = btn.dataset.p;
-  renderChart(); renderTable();
+  if (checkDateRange()) { renderChart(); renderTable(); }
 }));
 
 // ── Boot ─────────────────────────────────────────────────────────────────
