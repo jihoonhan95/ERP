@@ -423,7 +423,7 @@ function groupKey(dateStr, period) {
   const Y = dateStr.slice(0, 4), M = dateStr.slice(5, 7), D = dateStr.slice(8, 10);
   if (period === '연') return `${Y}년`;
   if (period === '월') return `${Y}년 ${M}월`;
-  return `${Y}.${M}.${D}`;
+  return `${Y}-${M}-${D}`;
 }
 
 function groupByPeriod(records, period) {
@@ -491,7 +491,7 @@ function renderChart() {
 
   const maxPoints = state.period === '일' ? 31 : 30;
 
-  // 일 단위: 첫날·1일·10일·20일·말일·마지막날 tick 표시
+  // 일 단위: date 축 + 첫날·1일·5단위·말일·마지막날 tick 표시
   if (state.period === '일') {
     const dates = [...new Set(view.map(r => r.date))].sort().slice(0, 31);
     const first = dates[0], last = dates[dates.length - 1];
@@ -503,9 +503,11 @@ function renderChart() {
       const next = new Date(d); next.setDate(day + 1);
       return next.getMonth() !== d.getMonth();
     });
-    const tickLabels = tickDates.map(dt => dt.replace(/-/g, '.'));
-    layout.xaxis.tickvals = tickLabels;
-    layout.xaxis.ticktext = tickLabels;
+    layout.xaxis.type = 'date';
+    layout.xaxis.hoverformat = '%Y.%m.%d';
+    layout.xaxis.tickmode = 'array';
+    layout.xaxis.tickvals = tickDates;
+    layout.xaxis.ticktext = tickDates.map(dt => dt.replace(/-/g, '.'));
   }
 
   if (isDefault()) {
