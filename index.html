@@ -473,6 +473,12 @@ function renderKPI() {
     </div>`).join('');
 }
 
+// ── Leadership Changes (sample) ────────────────────────────────────────────
+const LEADERSHIP = [
+  { type:'bu',     entity:'동부', date:'2025-09-01', role:'사업국장', prev:'이민호', next:'김지현' },
+  { type:'branch', entity:'부천', date:'2026-04-01', role:'지점장',   prev:'최유진', next:'한지민' },
+];
+
 // ── Chart ─────────────────────────────────────────────────────────────────
 function renderChart() {
   const view = filtered();
@@ -536,6 +542,44 @@ function renderChart() {
         hovertemplate:'<b>%{x}</b><br>₩%{y:,.0f}<extra></extra>' });
     }
   }
+  // ── Leadership change annotations ────────────────────────────────────────
+  const visibleX = new Set(traces.flatMap(t => t.x));
+  const shapes = [], annots = [];
+  let annIdx = 0;
+
+  LEADERSHIP.forEach(c => {
+    const relevant =
+      (c.type === 'bu'     && c.entity === '동부' && (isDefault() || state.bu === '동부')) ||
+      (c.type === 'branch' && c.entity === '부천' && state.branch === '부천');
+    if (!relevant) return;
+
+    const xKey = state.period === '일'
+      ? c.date
+      : groupKey(c.date, state.period);
+    if (!visibleX.has(xKey)) return;
+
+    const color = c.type === 'bu' ? '#c084fc' : '#fb923c';
+    const yAnchor = 0.97 - (annIdx % 2) * 0.22;
+
+    shapes.push({
+      type:'line', x0:xKey, x1:xKey, y0:0, y1:1, yref:'paper',
+      line:{ color, width:1.5, dash:'dot' },
+    });
+    annots.push({
+      x:xKey, y:yAnchor, yref:'paper',
+      text:`<b>${c.entity} ${c.role} 교체</b><br>${c.prev} → ${c.next}`,
+      showarrow:false,
+      font:{ color, size:9, family:'Inter, sans-serif' },
+      xanchor:'left', yanchor:'top',
+      bgcolor:'rgba(13,17,23,0.85)',
+      bordercolor:color, borderwidth:1, borderpad:5,
+    });
+    annIdx++;
+  });
+
+  layout.shapes      = shapes;
+  layout.annotations = annots;
+
   Plotly.react('mainChart', traces, layout, { displayModeBar:false, scrollZoom:false, responsive:true });
 }
 
