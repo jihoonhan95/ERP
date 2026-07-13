@@ -549,7 +549,7 @@ function renderChart() {
 
   LEADERSHIP.forEach(c => {
     const relevant =
-      (c.type === 'bu'     && c.entity === '동부' && (isDefault() || state.bu === '동부')) ||
+      (c.type === 'bu'     && c.entity === '동부' && state.bu === '동부' && state.branch === 'All') ||
       (c.type === 'branch' && c.entity === '부천' && state.branch === '부천');
     if (!relevant) return;
 
